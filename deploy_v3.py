@@ -98,7 +98,7 @@ def deploy(package,env,app_cmd,db_cmd):
     return error_info
 
 
-###get env info and cmd
+###get env info and cmd from file "env.json"
 def get_env(env_name):
     '''return the map class, element is dictionary of env info'''
     if os.path.exists('env.json') == 0:
@@ -154,18 +154,105 @@ main()
     except:
         print("Can't found SecureCRT on you computer! Exit")
         sys.exit()
-
 ######## open secureCRT ##end
 
 ######## Getting package from ftp
+ftp_host = "ftp.ebaotech.com"
+user = "pfl"
+password = "M5j9Ks3T"
 
 
+class sftp:
+    def __init__(self, ftp_host, user, password):
+        self.ftp_host = ftp_host
+        self.user = user
+        self.password = password
+        self.ts = paramiko.Transport(ftp_host,22)
+    def open(self):
+        self.ts.connect(username = self.user, password = self.password)
+        sftp_object = paramiko.SFTPClient.from_transport(self.ts)
+        return sftp_object
+    def close(self):
+        self.ts.close()
 
+def get_lastest_file(path, ftp_object):
+    #### temp
+    max_mtime = 0
+    lastest_file = paramiko.sftp_attr.SFTPAttributes()
+    current_path = path
+    target = ""
+       
+    #### compare modify time to get lastest file in current folder
+    files = ftp_object.listdir_attr(current_path)
+    for f in files:
+        if f.st_mtime > max_mtime:
+            max_mtime = f.st_mtime
+            lastest_file = f
+    
+    #### folder's st_mode is 16877, file is 33188                        
+    if lastest_file.st_mode == 16877:
+        next_path = path + '/' + lastest_file.filename
+        get_lastest_file(next_path, ftp_object)
+    elif lastest_file.st_mode == 33188:
+        target = current_path+'/'+lastest_file.filename
+        print(target)
+        return current_path+'/'+lastest_file.filename
+    else:
+        return None
+
+pfl_sftp = sftp(ftp_host,user,password)
+connection = pfl_sftp.open()
+
+package = get_lastest_file('/pfl', connection)
+pfl_sftp.close()
+if package != None:
+    print(package)           ###待优化，提供选项，确认或者手工输入发布包路径
+else:
+    print("Not found target file or lastest modfiied folder is empty!")
+
+######## compare package name with environment name
+def compare(str1,str2):
+    #####获取最长公共子串
+    str1 = str1.lower()
+    str2 = str2.lower()
+    record_list = [] ####取str2中字母和str1比较，记录结果到该list
+    max_num = [] #####记录每比较一次后的最大值
+    for i in str1:
+        record_list.append(0)
+    index2 = 0
+    for character2 in str2:
+        index1 = len(str1)
+        for character1 in str1[::-1]:
+            index1 = index1 - 1
+            if character2 == character1:
+                if index2 > 0 and index1 >0 :
+                    record_list[index1] = record_list[index1-1] + 1
+                else:
+                    record_list[index1] = 1
+            else:
+                record_list[index1] = 0    
+        index2 = index2 + 1
+        max_num.append(max(record_list))        
+    return max(max_num)
+
+def match_target_env(package):
+    db = TinyDB('env.json')
+    table_env = db.table('env_info')
+    envs= {}
+    for i in table_env.all():
+        envs[i.get('env_name')] = compare(i.get('env_name'),package)
+    target = []
+    for a,b in envs.items():
+        if b == max(envs.values()):
+            max_value_env.append(a)
+    target.sort()
+    target.reverse()
+    return target
 
 
 ######## Main Steps
-package = sys.argv[1]
-env_name = sys.argv[2:]
+#package = sys.argv[1]
+#env_name = sys.argv[2:]
 if os.path.exists(os.getcwd()+separator+package) and len(env_name) > 0:
     envs,app_cmd,db_cmd = get_env(env_name)
     print("start deploying %s to :" %(package))
