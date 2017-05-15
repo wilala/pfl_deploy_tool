@@ -157,9 +157,9 @@ main()
 ######## open secureCRT ##end
 
 ######## Getting package from ftp
-ftp_host = "ftp.ebaotech.com"
-user = "pfl"
-password = "M5j9Ks3T"
+ftp_host = ""
+user = ""
+password = ""
 
 
 class sftp:
@@ -206,17 +206,17 @@ connection = pfl_sftp.open()
 package = get_lastest_file('/pfl', connection)
 pfl_sftp.close()
 if package != None:
-    print(package)           ###´ıÓÅ»¯£¬Ìá¹©Ñ¡Ïî£¬È·ÈÏ»òÕßÊÖ¹¤ÊäÈë·¢²¼°üÂ·¾¶
+    print(package)           ###å¾…ä¼˜åŒ–ï¼Œæä¾›é€‰é¡¹ï¼Œç¡®è®¤æˆ–è€…æ‰‹å·¥è¾“å…¥å‘å¸ƒåŒ…è·¯å¾„
 else:
     print("Not found target file or lastest modfiied folder is empty!")
 
 ######## compare package name with environment name
 def compare(str1,str2):
-    #####»ñÈ¡×î³¤¹«¹²×Ó´®
+    #####è·å–æœ€é•¿å…¬å…±å­ä¸²
     str1 = str1.lower()
     str2 = str2.lower()
-    record_list = [] ####È¡str2ÖĞ×ÖÄ¸ºÍstr1±È½Ï£¬¼ÇÂ¼½á¹ûµ½¸Ãlist
-    max_num = [] #####¼ÇÂ¼Ã¿±È½ÏÒ»´ÎºóµÄ×î´óÖµ
+    record_list = [] ####å–str2ä¸­å­—æ¯å’Œstr1æ¯”è¾ƒï¼Œè®°å½•ç»“æœåˆ°è¯¥list
+    max_num = [] #####è®°å½•æ¯æ¯”è¾ƒä¸€æ¬¡åçš„æœ€å¤§å€¼
     for i in str1:
         record_list.append(0)
     index2 = 0
